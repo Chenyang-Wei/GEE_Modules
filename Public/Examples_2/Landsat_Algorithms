@@ -1,0 +1,104 @@
+/**
+ * Introduction:
+ *  This script is about Landsat processing methods described in the GEE tutorial at: 
+ *    https://developers.google.com/earth-engine/guides/landsat
+ * 
+ * Update: 10/28/2022.
+*/
+
+
+/* 1) At-sensor radiance and TOA reflectance. */
+
+// Load a raw Landsat scene and display it.
+var raw = ee.Image('LANDSAT/LC08/C01/T1/LC08_044034_20140318');
+// Map.centerObject(raw, 10);
+Map.addLayer(raw, {bands: ['B4', 'B3', 'B2'], 
+                   min: 6000, max: 12000}, 
+            'raw');
+
+// Convert the raw data to radiance.
+var radiance = ee.Algorithms.Landsat.calibratedRadiance(raw);
+Map.addLayer(radiance, {bands: ['B4', 'B3', 'B2'], 
+                        max: 90}, 
+            'radiance');
+
+// Convert the raw data to top-of-atmosphere reflectance.
+var toa = ee.Algorithms.Landsat.TOA(raw);
+
+Map.addLayer(toa, {bands: ['B4', 'B3', 'B2'], 
+                   max: 0.2}, 
+            'toa reflectance');
+
+
+/* 2) Surface reflectance. */
+
+// a USGS Collection 2, Level 2 Landsat 8 image.
+var srImage = ee.Image('LANDSAT/LC08/C02/T1_L2/LC08_044034_20201028');
+
+print('Surface reflectance', srImage);
+
+Map.addLayer(srImage, 
+            {
+              bands: ['SR_B4', 'SR_B3', 'SR_B2'], 
+              min: 8000, 
+              max: 16000
+            }, 
+            'Surface reflectance');
+
+
+/* 3) Simple cloud score. */
+
+// Load a cloudy Landsat scene and display it.
+var cloudy_scene = ee.Image('LANDSAT/LC08/C01/T1_TOA/LC08_044034_20140926');
+Map.centerObject(cloudy_scene);
+Map.addLayer(cloudy_scene, {bands: ['B4', 'B3', 'B2'], max: 0.4}, 'TOA', false);
+
+// Add a cloud score band.  It is automatically called 'cloud'.
+var scored = ee.Algorithms.Landsat.simpleCloudScore(cloudy_scene);
+
+// Create a mask from the cloud score and combine it with the image mask.
+var mask = scored.select(['cloud']).lte(20);
+
+// Apply the mask to the image and display the result.
+var masked = cloudy_scene.updateMask(mask);
+Map.addLayer(masked, {bands: ['B4', 'B3', 'B2'], max: 0.4}, 'masked');
+
+// Load a Landsat 8 composite and set the SENSOR_ID property.
+var mosaic = ee.Image(ee.ImageCollection('LANDSAT/LC8_L1T_8DAY_TOA').first())
+  .set('SENSOR_ID', 'OLI_TIRS');
+
+// Cloud score the mosaic and display the result.
+var scored_mosaic = ee.Algorithms.Landsat.simpleCloudScore(mosaic);
+var newMask = scored_mosaic.select(['cloud']).lte(20);
+
+Map.addLayer(scored_mosaic, {bands: ['B4', 'B3', 'B2'], max: 0.4},
+    'TOA mosaic (raw)', true);
+
+Map.addLayer(scored_mosaic.updateMask(newMask), {bands: ['B4', 'B3', 'B2'], max: 0.4},
+    'TOA mosaic (masked)', true);
+
+print('scored_mosaic', scored_mosaic);
+
+
+/* 4) Simple composite. */
+
+// Load a raw Landsat 5 ImageCollection for a single year.
+var collection = ee.ImageCollection('LANDSAT/LT05/C01/T1')
+    .filterDate('2010-01-01', '2010-12-31');
+
+// Create a cloud-free composite with default parameters.
+var composite = ee.Algorithms.Landsat.simpleComposite(collection);
+
+// Create a cloud-free composite with custom parameters for
+// cloud score threshold and percentile.
+var customComposite = ee.Algorithms.Landsat.simpleComposite({
+  collection: collection,
+  percentile: 75,
+  cloudScoreRange: 5
+});
+
+// Display the composites.
+// Map.setCenter(-122.3578, 37.7726, 10);
+Map.addLayer(composite, {bands: ['B4', 'B3', 'B2'], max: 128}, 'L5 TOA composite');
+Map.addLayer(customComposite, {bands: ['B4', 'B3', 'B2'], max: 128},
+    'Custom L5 TOA composite');

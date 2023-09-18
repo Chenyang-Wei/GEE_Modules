@@ -1,0 +1,46 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var states = ee.FeatureCollection("users/ujavalgandhi/public/india_states_datameet");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+// Example script showing how to calculate buffer region
+// along the border of 2 polygons
+var state1 = ee.Feature(states.filter(ee.Filter.eq('ST_NM', 'Andhra Pradesh')).first());
+var state2 = ee.Feature(states.filter(ee.Filter.eq('ST_NM', 'Telangana')).first());
+
+Map.addLayer(state1, {color: 'grey'}, 'State 1');
+Map.addLayer(state2, {color: 'grey'}, 'State 2');
+
+// Define the distance in meters
+var distance = 1000;
+
+// Buffer each polygon inwards by the distance and compute the difference
+// The result will be a buffer region for the entire polygon
+var state1Buffer = state1.symmetricDifference(state1.buffer(-1*distance));
+var state2Buffer = state2.symmetricDifference(state2.buffer(-1*distance));
+
+Map.addLayer(state1.buffer(-1*distance), {color: 'red'}, 'state1.buffer(-1*distance)');
+Map.addLayer(state2.buffer(-1*distance), {color: 'blue'}, 'state2.buffer(-1*distance)');
+
+// We only want the buffer region along the border
+// We buffer the original states outwards by 2*distance and
+// intersect it with the buffer of the other state
+var state1BorderBuffer = state1Buffer.intersection(state2.buffer(2*distance))
+var state2BorderBuffer = state2Buffer.intersection(state1.buffer(2*distance))
+
+// Put both in a collection
+var result = ee.FeatureCollection([state1BorderBuffer, state2BorderBuffer]);
+
+// // This computation may time out, so export it as an asset and import it
+// // once it finishes
+// Export.table.toAsset({
+//   collection: result,
+//   description: 'State_Buffers', 
+//   assetId: 'users/ujavalgandhi/public/single_sided_buffers'})
+
+// Imported asset after export finished
+var result = ee.FeatureCollection('users/ujavalgandhi/public/single_sided_buffers');
+
+var state1Result = ee.Feature(result.filter(ee.Filter.eq('ST_NM', 'Andhra Pradesh')).first());
+var state2Result = ee.Feature(result.filter(ee.Filter.eq('ST_NM', 'Telangana')).first());
+
+Map.addLayer(state1Result, {color: 'red'}, 'State 1 Buffer Region');
+Map.addLayer(state2Result, {color: 'blue'}, 'State 2 Buffer Region');
