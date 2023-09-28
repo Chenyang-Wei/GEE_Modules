@@ -1,7 +1,14 @@
 /** 
  * Introduction:
  *  This is a module for objects and funcitons that are often used
- *    for FeatureCollection analysis and processing.
+ *    for analyzing and processing FeatureCollections.
+ * 
+ * Function groups:
+ *  Group 1 - Examine the FeatureCollection information.
+ *  Group 2 - Combine the FeatureCollection information.
+ *  Group 3 - Process FeatureCollection properties.
+ *  Group 4 - Perform calculations with FeatureCollection properties.
+ *  Group 5 - Add the Image information to FeatureCollections.
  * 
  * Reference to the public repository:
  *  https://code.earthengine.google.com/?scriptPath=users/ChenyangWei/Public
@@ -9,7 +16,7 @@
  * Load this module:
  *  var FC_AP = require("users/ChenyangWei/Public:Modules/General/FeatureCollection_Analysis&Processing.js");
  * 
- * Update: 4/19/2022.
+ * Update: 9/28/2023.
  */
 
 
@@ -20,7 +27,8 @@
 
 /****** Functions. ******/
 
-/* Functions for examining the FeatureCollection information. */
+
+/**** Group 1 - Examine the FeatureCollection information. ****/
 
 // Function to print the basin information of a FeatureCollection.
 exports.Print_FtrColInfo = function(name, ftrCol) {
@@ -73,8 +81,7 @@ exports.Examine_FtrCol_PropertyPercentiles =
   };
 
 
-
-/* Functions for combining FeatureCollections. */
+/**** Group 2 - Combine the FeatureCollection information. ****/
 
 // Function to combine two FeatureCollections by a common property,
 //  which has the same name in both FeatureCollections,
@@ -196,8 +203,7 @@ exports.combine_twoFtrCols_primaryGeometriesANDsecondaryProperties =
   };
 
 
-
-/* Functions for processing FeatureCollection properties. */
+/**** Group 3 - Process FeatureCollection properties. ****/
 
 // Function to remove a list of properties from a FeatureCollection.
 exports.FtrCol_PropertyRemoval = 
@@ -260,8 +266,7 @@ exports.FtrCol_PropertyRename =
   };
 
 
-
-/* Functions for the calculations with FeatureCollection properties. */
+/**** Group 4 - Perform calculations with FeatureCollection properties. ****/
 
 // Function to compute the ratio between two properties of each Feature 
 //  and add the result to each Feature as a new property.
@@ -330,4 +335,62 @@ exports.FtrCol_PropertyDifferenceCalculation =
     return newFtrCol;
   };
 
+
+/**** Group 5 - Add the Image information to FeatureCollections. ****/
+
+/**
+ * Perform ReduceRegions over an Image by Feature group.
+ * 
+ * @param {Image} varToReduce_Img - Variable to aggregate.
+ * @param {FeatureCollection} rawRegions_FC - Areal unit of 
+ *         variable aggregation.
+ * @param {String} groupIDname_Str - Name of the group ID of 
+ *         Features/regions.
+ * @param {Reducer} varReducer - Variable aggregation metric.
+ * @param {Projection} imgProj - Projection of the variable 
+ *         to aggregate.
+ * 
+ * @return {FeatureCollection} - Areal unit with the aggregated
+ *          variable.
+ */
+exports.ReduceRegions_byFeatureGroup = 
+  function(varToReduce_Img, rawRegions_FC, 
+    groupIDname_Str, varReducer, imgProj) {
+    
+    // Create a non-duplicate List of the group ID.
+    var groupIDs_List = rawRegions_FC
+      .aggregate_array(groupIDname_Str)
+      .distinct();
+    
+    // Perform ReduceRegions by Feature group.
+    var newRegions_List = 
+      groupIDs_List.map(function Reduce_byGroup(groupID_Num) {
+        
+        // Create a Filter of the group ID.
+        var groupID_Filter = ee.Filter.eq(
+          groupIDname_Str, groupID_Num);
+        
+        // Identify the Features of each group.
+        var rawRegions_perGroup_FC = rawRegions_FC
+          .filter(groupID_Filter);
+        
+        // Perform ReduceRegions.
+        var newRegions_perGroup_FC = 
+          varToReduce_Img.reduceRegions({
+            collection: rawRegions_perGroup_FC, 
+            reducer: varReducer,
+            scale: imgProj.scale, 
+            crs: imgProj.crs
+          });
+        
+        return newRegions_perGroup_FC;
+      });
+      
+    // Convert the result to a FeatureCollection.
+    var newRegions_FC = ee.FeatureCollection(
+      newRegions_List)
+      .flatten();
+      
+    return newRegions_FC;
+  };
 

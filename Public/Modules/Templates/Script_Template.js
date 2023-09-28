@@ -34,17 +34,29 @@
 /* 3) Operation #3. */
 
 
-var output = false;
+/* Check/output the result(s). */
+
+var output = false; // true OR false.
 
 if (!output) {
   
-  /* Check the result(s). */
+  // Visualization.
   
   Map.setOptions("Satellite");
   
 } else {
   
-  /* Output the result(s).*/
+  // Output to Asset.
   
+  var fileName = "HybasSampled_ATETs";
+  
+  Export.table.toAsset({
+    collection: sampled_Transects, 
+    description: fileName, 
+    assetId: GATE.wd_Global 
+      + "Elevational_Transects/"
+      + "Validation/"
+      + fileName
+  });
 }
 

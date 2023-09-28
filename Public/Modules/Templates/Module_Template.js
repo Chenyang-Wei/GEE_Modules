@@ -4,16 +4,17 @@
  *    performing ....
  * 
  * Object groups:
- *  1) Group 1: ....
+ *  Group 1 - ....
  * 
  * Function groups:
- *  1) Group 1: ....
+ *  Group 1 - ....
  * 
  * Reference to the public repository:
  *  https://code.earthengine.google.com/?scriptPath=users/ChenyangWei/Public
  * 
  * Load this module:
- *  var LDM = require("users/ChenyangWei/Public:Modules/General/LANDSAT_Data_Manipulation.js");
+ *  var LDM = require(
+ *    "users/ChenyangWei/Public:Modules/General/LANDSAT_Data_Manipulation.js");
  * 
  * Update: 9/22/2023.
  */
@@ -26,7 +27,7 @@
 /****** Objects. ******/
 
 
-/**** 1) Group 1: .... ****/
+/**** Group 1 - .... ****/
 
 /* Object 1. */
 exports.Object_1;
@@ -36,7 +37,7 @@ exports.Object_1;
 /****** Functions. ******/
 
 
-/**** 1) Group 1: .... ****/
+/**** Group 1 - .... ****/
 
 /**
  * Function's purpose

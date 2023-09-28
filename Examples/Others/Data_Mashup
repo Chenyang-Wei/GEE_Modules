@@ -1,0 +1,72 @@
+// Demo data mashup.
+
+// By Nick Clinton (see the presentation at EarthEngine@SG on 9/13/2021.)
+
+// Sentinel-2 for NIR.
+
+// Function to mask clouds using the Sentinel-2 QA band.
+function maskS2clouds(image) {
+  var qa = image.select('QA60')
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0).and(
+             qa.bitwiseAnd(cirrusBitMask).eq(0))
+  return image.updateMask(mask).divide(10000)
+      .select("B.*")
+      .copyProperties(image, ["system:time_start"])
+}
+
+// Map the function over one year of data and take the median.
+// Load Sentinel-2 TOA reflectance data.
+var collection = ee.ImageCollection('COPERNICUS/S2')
+    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+    .map(maskS2clouds)
+
+var nir = collection.select('B8').median()
+Map.addLayer(nir, {max: 0.25}, 'nir');
+
+// Landsat 8 for thermal.
+
+// Function to cloud mask from the pixel_qa band of Landsat 8 SR data.
+function maskL8sr(image) {
+  var qaMask = image.select('QA_PIXEL').bitwiseAnd(parseInt('11111', 2)).eq(0);
+  var saturationMask = image.select('QA_RADSAT').eq(0);
+
+  // Apply the scaling factors to the appropriate bands.
+  var opticalBands = image.select('SR_B.').multiply(0.0000275).add(-0.2);
+  var thermalBands = image.select('ST_B.*').multiply(0.00341802).add(149.0);
+
+  // Replace the original bands with the scaled ones and apply the masks.
+  return image.addBands(opticalBands, null, true)
+      .addBands(thermalBands, null, true)
+      .updateMask(qaMask)
+      .updateMask(saturationMask);
+}
+
+// Map the function over one year of data.
+var collection = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+    .map(maskL8sr)
+
+var composite = collection.median();
+Map.addLayer(composite, {bands: ['SR_B4', 'SR_B3', 'SR_B2'], min: 0, max: 0.3}, 'composite');
+
+var thermal = collection.select('ST_B10').max()
+Map.addLayer(thermal, {min: 285, max: 325}, 'thermal');
+
+
+// Sentinel-1 (radar) composite.
+var s1 = ee.ImageCollection("COPERNICUS/S1_GRD_FLOAT");
+print(s1.first())
+
+// Sentinel-1 (radar) composite.
+var vh = s1.filter(ee.Filter.listContains('transmitterReceiverPolarisation', 'VH'))
+           .filter(ee.Filter.eq('instrumentMode', 'IW'));
+vh = vh.map(function(image) {
+  return image.log10()
+})
+var vhComposite = vh.select('VH').max();
+Map.addLayer(vhComposite, {min: -3, max: 2}, 'vhComposite');
+
+// Make an RGB composite of Red=thermal, Green=veg, Blue=radar.
+var rgb = ee.Image.cat([thermal, nir, vhComposite]);
+Map.addLayer(rgb, {min: [285, 0, -5], max: [325, 0.25, 2]}, 'rgb');
