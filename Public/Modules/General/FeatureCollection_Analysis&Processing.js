@@ -16,7 +16,7 @@
  * Load this module:
  *  var FC_AP = require("users/ChenyangWei/Public:Modules/General/FeatureCollection_Analysis&Processing.js");
  * 
- * Update: 9/28/2023.
+ * Update: 10/5/2023.
  */
 
 
@@ -31,7 +31,7 @@
 /**** Group 1 - Examine the FeatureCollection information. ****/
 
 // Function to print the basin information of a FeatureCollection.
-exports.Print_FtrColInfo = function(name, ftrCol) {
+exports.Print_FCinfo = function(name, ftrCol) {
   
   /**
    * "String":
