@@ -42,10 +42,13 @@ exports.Object_1;
 /**
  * Function's purpose
  * 
- * @param {param_1_type} param_1_name - description
- * @param {param_2_type} param_2_name - description
+ * @param {param_1_type} param_1_name - 
+ *         description
+ * @param {param_2_type} param_2_name - 
+ *         description
  * 
- * @return {return_type} - description
+ * @return {return_type} - 
+ *          description
  */
 exports.Function_Name = function(param_1, param_2) {
   return return_Value;

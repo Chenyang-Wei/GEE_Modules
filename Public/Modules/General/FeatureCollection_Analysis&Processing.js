@@ -16,7 +16,7 @@
  * Load this module:
  *  var FC_AP = require("users/ChenyangWei/Public:Modules/General/FeatureCollection_Analysis&Processing.js");
  * 
- * Update: 10/5/2023.
+ * Update: 10/6/2023.
  */
 
 
@@ -82,6 +82,66 @@ exports.Examine_FtrCol_PropertyPercentiles =
 
 
 /**** Group 2 - Combine the FeatureCollection information. ****/
+
+/**
+ * Join two FeatureCollections by a Filter and
+ *  add the unique properties of each matched secondary Feature
+ *  to the corresponding primary Feature.
+ * 
+ * @param {FeatureCollection} primary_FC - 
+ *         The primary FeatureCollection to join.
+ * @param {FeatureCollection} secondary_FC - 
+ *         The secondary FeatureCollection to join.
+ * @param {Filter} condition_Filter - 
+ *         The join condition.
+ * 
+ * @return {FeatureCollection} - 
+ *          The joined FeatureCollection with
+ *            the Geometries and properties of the primary FeatureCollection
+ *            and the unique properties of the secondary FeatureCollection.
+ */
+exports.Join_2FC_byFilter = 
+  function(primary_FC, secondary_FC, condition_Filter) {
+    
+    // Get the property names of each primary Feature.
+    var primaryProperties_List = primary_FC.first().propertyNames();
+    
+    // Set the name of each matched secondary Feature.
+    var joinedName_Str = "joined_Secondary";
+    
+    // Join each primary Feature with the corresponding secondary Feature.
+    var joined_FC = ee.Join.saveFirst({
+      matchKey: joinedName_Str
+    }).apply({
+      primary: primary_FC, 
+      secondary: secondary_FC, 
+      condition: condition_Filter
+    });
+    
+    // Copy the unique properties of each matched secondary Feature
+    //  to the corresponding joined Feature.
+    var propertyCopied_FC = joined_FC.map(function(joined_Ftr) {
+      
+      // Select the primary-Feature properties.
+      var joinedPrimary_Ftr = joined_Ftr.select(primaryProperties_List);
+      
+      // Get the matched secondary Feature;
+      var joinedSecondary_Ftr = joined_Ftr.get(joinedName_Str);
+      
+      // Copy the unique secondary-Feature properties.
+      var propertyCopied_Ftr = joinedPrimary_Ftr.copyProperties({
+        source: joinedSecondary_Ftr, 
+        exclude: primaryProperties_List
+      });
+      
+      return propertyCopied_Ftr;
+    });
+    
+    // Return the joined FeatureCollection 
+    //  with the unique properties of the secondary FeatureCollection.
+    return propertyCopied_FC;
+  };
+
 
 // Function to combine two FeatureCollections by a common property,
 //  which has the same name in both FeatureCollections,
