@@ -9,7 +9,7 @@
  * Load this module:
  *  var IMG = require("users/ChenyangWei/Public:Modules/General/Image_Analysis&Processing.js");
  * 
- * Update: 11/27/2022.
+ * Update: 10/10/2023.
  */
 
 
@@ -49,7 +49,7 @@ exports.maxPxNum = 1e13;
 /****** Functions. ******/
 
 // Function to print the image information.
-exports.printImgInfo = function(name, image) {
+exports.Print_ImgInfo = function(name, image) {
   print(name,
     image.bandTypes(),
     image.projection().crs(),

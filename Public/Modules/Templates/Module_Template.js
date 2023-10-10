@@ -16,7 +16,7 @@
  *  var LDM = require(
  *    "users/ChenyangWei/Public:Modules/General/LANDSAT_Data_Manipulation.js");
  * 
- * Update: 9/22/2023.
+ * Updated: 9/22/2023.
  */
 
 

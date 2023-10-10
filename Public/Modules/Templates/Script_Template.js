@@ -58,5 +58,16 @@ if (!output) {
       + "Validation/"
       + fileName
   });
+  
+  // Output to Drive.
+  
+  var fileName = "HybasSampled_ATETs";
+  
+  Export.table.toDrive({
+    collection: sampled_Transects, 
+    description: fileName, 
+    folder: fileName, 
+    fileFormat: "SHP"
+  });
 }
 
