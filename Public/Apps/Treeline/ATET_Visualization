@@ -92,7 +92,7 @@ m.ATETinfo.mountains =
 
 // Define the types of vegetation differences.
 m.diffTypes = {
-  'Canopy height difference': {
+  'Canopy height difference (m)': {
     gmba: {
       data: m.FtrCols.gmbaVCH,
       varName: "Avg_CHdiff"
@@ -267,7 +267,7 @@ c.visualizeVegeDiff.diffSelector =
   ui.Select({
     items: Object.keys(m.diffTypes), 
     placeholder: "Select a difference type...",
-    value: "Canopy height difference"
+    value: "Canopy height difference (m)"
   });
 c.visualizeVegeDiff.diffPanel = 
   ui.Panel([
@@ -305,6 +305,46 @@ c.visualizeVegeDiff.panel =
     c.visualizeVegeDiff.levelPanel
   ]);
 
+// Define a legend widget group.
+c.legend = {};
+c.legend.title = 
+  ui.Label();
+c.legend.colorbar = 
+  ui.Thumbnail(ee.Image.pixelLonLat().select(0));
+c.legend.leftLabel = 
+  ui.Label('[min]');
+c.legend.centerLabel = 
+  ui.Label();
+c.legend.rightLabel = 
+  ui.Label('[max]');
+c.legend.labelPanel = 
+  ui.Panel({
+    widgets: [
+      c.legend.leftLabel,
+      c.legend.centerLabel,
+      c.legend.rightLabel,
+    ],
+    layout: ui.Panel.Layout.flow('horizontal')
+  });
+c.legend.panel = 
+  ui.Panel([
+    c.legend.title,
+    c.legend.colorbar,
+    c.legend.labelPanel
+  ]);
+
+// Define a panel for displaying a chart.
+c.chart = {};
+c.chart.shownButton = 
+  ui.Button('Hide chart');
+c.chart.container = 
+  ui.Panel();  // will hold the dynamically generated chart. 
+c.chart.chartPanel = 
+  ui.Panel([
+    c.chart.shownButton, 
+    c.chart.container
+  ]);
+
 
 print(c)
 
@@ -313,6 +353,7 @@ print(c)
  * Composition *
  ******************************************************************************/
 
+// Control panel.
 c.controlPanel.add(c.info.panel);
 c.controlPanel.add(c.dividers.divider1);
 c.controlPanel.add(c.zoomInMountain.panel);
@@ -321,6 +362,10 @@ c.controlPanel.add(c.displayTransects.panel);
 c.controlPanel.add(c.dividers.divider3);
 c.controlPanel.add(c.visualizeVegeDiff.panel);
 c.controlPanel.add(c.dividers.divider4);
+
+// Map panel.
+c.map.add(c.legend.panel);
+c.map.add(c.chart.chartPanel);
 
 ui.root.clear();
 ui.root.add(c.controlPanel);
@@ -335,12 +380,12 @@ ui.root.add(c.map);
 // Define CSS-like class style properties for widgets; reusable styles.
 var s = {};
 
-// s.opacityWhiteMed = {
-//   backgroundColor: 'rgba(255, 255, 255, 0.5)'
-// };
-// s.opacityWhiteNone = {
-//   backgroundColor: 'rgba(255, 255, 255, 0)'
-// };
+s.opacityWhiteMed = {
+  backgroundColor: 'rgba(255, 255, 255, 0.5)'
+};
+s.opacityWhiteNone = {
+  backgroundColor: 'rgba(255, 255, 255, 0)'
+};
 s.aboutText = {
   fontSize: '13px',
   color: '505050'
@@ -372,7 +417,13 @@ s.divider = {
   margin: '20px 0px'
 };
 
-// Set widget style.
+// Set the styles of widgets in the control panel.
+c.controlPanel.style()
+  .set({
+    width: '30%',
+    padding: '0px'
+  });
+
 c.info.titleLabel.style()
   .set({
     fontSize: '20px',
@@ -408,14 +459,17 @@ c.visualizeVegeDiff.label.style()
 c.visualizeVegeDiff.diffSelector.style()
   .set(s.stretchHorizontal);
 
-c.controlPanel.style().set({
-  width: '30%',
-  padding: '0px'
+// Loop through setting divider style.
+Object.keys(c.dividers).forEach(function(key) {
+  c.dividers[key].style()
+    .set(s.divider);
 });
 
-c.map.style().set({
-  cursor: 'crosshair'
-});
+// Set the styles of widgets in the map panel.
+c.map.style()
+  .set({
+    cursor: 'crosshair'
+  });
 
 c.map.setOptions("hybrid");
 
@@ -426,10 +480,53 @@ c.map.setControlVisibility({
   fullscreenControl: false
 });
 
-// Loop through setting divider style.
-Object.keys(c.dividers).forEach(function(key) {
-  c.dividers[key].style().set(s.divider);
-});
+c.legend.title.style()
+  .set({
+    fontWeight: 'bold',
+    fontSize: '12px',
+    color: '383838'
+  });
+c.legend.title.style()
+  .set(s.opacityWhiteNone);
+c.legend.colorbar.style()
+  .set({
+    stretch: 'horizontal',
+    margin: '0px 8px',
+    maxHeight: '20px'
+  });
+c.legend.leftLabel.style()
+  .set({
+    margin: '4px 8px',
+    fontSize: '12px'
+  });
+c.legend.leftLabel.style()
+  .set(s.opacityWhiteNone);
+c.legend.centerLabel.style()
+  .set({
+    margin: '4px 8px',
+    fontSize: '12px',
+    textAlign: 'center',
+    stretch: 'horizontal'
+  });
+c.legend.centerLabel.style()
+  .set(s.opacityWhiteNone);
+c.legend.rightLabel.style()
+  .set({
+    margin: '4px 8px',
+    fontSize: '12px'
+  });
+c.legend.rightLabel.style()
+  .set(s.opacityWhiteNone);
+c.legend.panel.style()
+  .set({
+    position: 'bottom-right',
+    width: '30%',
+    padding: '0px'
+  });
+c.legend.panel.style()
+  .set(s.opacityWhiteMed);
+c.legend.labelPanel.style()
+  .set(s.opacityWhiteNone);
 
 
 /*******************************************************************************
@@ -513,7 +610,7 @@ function updateCentroidDisplay() {
 
   // Create a layer of centroids.
   var globalATECs_Layer = ui.Map.Layer(
-    m.FtrCols.ATECs, {color: "00ffff"}, 
+    m.FtrCols.ATECs, {color: "ffff00"}, 
     "Global ATECs")
     .setShown(centroidChecked);
 
@@ -644,6 +741,125 @@ function updateRawTransectCheckbox() {
     }).getInfo());
 }
 
+// Handles drawing the legend 
+//  when difference selector changes.
+function updateLegend() {
+  c.legend.title.setValue(
+    c.visualizeVegeDiff.diffSelector.getValue());
+  c.legend.colorbar.setParams({
+    bbox: [0, 0, 1, 0.1],
+    dimensions: '100x10',
+    format: 'png',
+    min: 1,
+    max: 0,
+    palette: m.diffTypes[
+      c.visualizeVegeDiff.diffSelector.getValue()]
+      .vis.palette
+  });
+  c.legend.leftLabel.setValue(
+    m.diffTypes[
+      c.visualizeVegeDiff.diffSelector.getValue()]
+      .vis.max);
+  c.legend.centerLabel.setValue(
+    m.diffTypes[
+      c.visualizeVegeDiff.diffSelector.getValue()]
+      .vis.max / 2);
+  c.legend.rightLabel.setValue(
+    m.diffTypes[
+      c.visualizeVegeDiff.diffSelector.getValue()]
+      .vis.min);
+}
+
+// Handles map clicks for charting.
+function drawChart(coords) {
+  // Get out if call to drawChart did not come from 
+  //  map click and the chart has not been drawn previously.
+  if (!coords.lon) {
+    return null;
+  }
+  
+  // Get out if the clicked point intersects any transect.
+  var point = ee.Geometry.Point([coords.lon, coords.lat])
+    .buffer(45);
+  var clicked = m.FtrCols.ATETs.filterBounds(point);
+  if (clicked.size().getInfo() === 0) {
+    return null;
+  }
+  
+  // Show the chart panel if this is the first time 
+  //  a point is clicked.
+  if (!c.chart.chartPanel.style().get('shown')) {
+    c.chart.chartPanel.style().set('shown', true);
+  }
+  
+  // Show chart if hidden; assuming user wants to 
+  //  see updates to chart.
+  if (c.chart.shownButton.getLabel() == 'Show chart') {
+    c.chart.container.style().set({shown: true});
+    c.chart.shownButton.setLabel('Hide chart');
+  }
+
+  var layer = ui.Map.Layer(
+    point, {color: "0000ff"}, 'Clicked point');
+  c.map.layers().set(5, layer);
+
+  var styleChartAxis = {
+    italic: false,
+    bold: true
+  };
+  var styleChartArea = {
+    width: '600px',
+    height: '255px',
+    margin: '0px',
+    padding: '0px'
+  }; 
+  
+  // Generate a chart.
+  var clickedTransect = clicked
+    .first();
+  
+  print(clicked.size())
+  // var chart = ui.Chart.image.series({
+  //   imageCollection: m.col.select(
+  //     getPropertyValueList(m.imgInfo.bands, 'bname')),
+  //   region: point.buffer(radius),
+  //   reducer: ee.Reducer.mean(),
+  //   scale: m.col.first().projection().nominalScale()
+  // })
+  // .setSeriesNames(Object.keys(m.imgInfo.bands))
+  // .setChartType('ColumnChart')
+  // .setOptions({
+  //   titlePosition: 'none',
+  //   colors: getPropertyValueList(m.imgInfo.bands, 'color'),
+  //   hAxis: {
+  //     title: 'Year',
+  //     titleTextStyle: styleChartAxis
+  //   },
+  //   vAxis: {
+  //     title: 'Stacked percent cover',
+  //     titleTextStyle: styleChartAxis,
+  //   },
+  //   legend: {maxLines: 2},
+  //   isStacked: 'percent'
+  // });
+  
+  // chart.style().set(styleChartArea);
+  
+  // c.chart.container.widgets().reset([chart]);
+}
+
+// Handles showing/hiding the chart panel.
+function showHideChart() {
+  var shown = true;
+  var label = 'Hide chart';
+  if (c.chart.shownButton.getLabel() == 'Hide chart') {
+    shown = false;
+    label = 'Show chart';
+  }
+  c.chart.container.style().set({shown: shown});
+  c.chart.shownButton.setLabel(label);
+}
+
 
 // Zoom-in panel.
 c.zoomInMountain.regionSelector
@@ -666,6 +882,8 @@ c.visualizeVegeDiff.diffSelector
   .onChange(updateWatershedDifference);
 c.visualizeVegeDiff.diffSelector
   .onChange(updateTransectDifference);
+c.visualizeVegeDiff.diffSelector
+  .onChange(updateLegend);
 
 // Difference level panel.
 c.visualizeVegeDiff.mountainCheckbox
@@ -677,6 +895,10 @@ c.visualizeVegeDiff.transectCheckbox
 c.visualizeVegeDiff.transectCheckbox
   .onChange(updateRawTransectCheckbox);
 
+// Map panel.
+c.map.onClick(drawChart);
+c.chart.shownButton.onClick(showHideChart);
+
 
 /*******************************************************************************
  * Initialize *
@@ -687,8 +909,9 @@ updateMountainDifference();
 updateWatershedDifference();
 updateTransectDifference();
 updateRawTransectCheckbox();
+updateLegend();
 
-// Raw datasets.
+// Raw datasets/centroids.
 updateTransectDisplay();
 updateTransectDiffCheckbox();
 updateCentroidDisplay();
