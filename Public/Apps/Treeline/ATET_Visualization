@@ -105,6 +105,8 @@ m.diffTypes = {
       data: m.FtrCols.ATETs,
       varName: "CHdiff"
     },
+    varName: "canopy height (m)",
+    suffix: "CanopyHt",
     color: '#08306b',
     vis: {
       min: 0,
@@ -127,6 +129,8 @@ m.diffTypes = {
       data: m.FtrCols.ATETs,
       varName: "NDVIdiff"
     },
+    varName: "NDVI",
+    suffix: "NDVI",
     color: '#00441b',
     vis: {
       min: 0,
@@ -138,10 +142,7 @@ m.diffTypes = {
   }
 };
 
-// print(m.FtrCols.gmbaNDVI.first())
-// print(m.FtrCols.hybasNDVI.first())
-// print(m.FtrCols.ATETs.first())
-print(m.diffTypes)
+print(m.FtrCols.ATETs.first())
 
 /*******************************************************************************
  * Components *
@@ -333,20 +334,114 @@ c.legend.panel =
     c.legend.labelPanel
   ]);
 
-// Define a panel for displaying a chart.
-c.chart = {};
-c.chart.shownButton = 
-  ui.Button('Hide chart');
-c.chart.container = 
-  ui.Panel();  // will hold the dynamically generated chart. 
-c.chart.chartPanel = 
+// Define a panel for inspecting a transect.
+c.inspector = {};
+c.inspector.shownButton = 
+  ui.Button('Hide information');
+c.inspector.chartPanel = 
+  ui.Panel();  // To hold the dynamically generated chart. 
+c.inspectorLabels = {};
+c.inspectorValues = {};
+
+// Transect information.
+c.inspectorLabels.ID = 
+  ui.Label('Transect ID:');
+c.inspectorValues.ID = 
+  ui.Label();
+c.inspector.IDpanel = 
+  ui.Panel({
+    widgets: [
+      c.inspectorLabels.ID,
+      c.inspectorValues.ID
+    ],
+    layout: ui.Panel.Layout.flow('horizontal')
+  });
+c.inspectorLabels.range = 
+  ui.Label('Elevational range (m):');
+c.inspectorValues.range = 
+  ui.Label();
+c.inspector.rangePanel = 
+  ui.Panel({
+    widgets: [
+      c.inspectorLabels.range,
+      c.inspectorValues.range
+    ],
+    layout: ui.Panel.Layout.flow('horizontal')
+  });
+c.inspectorLabels.length = 
+  ui.Label('Horizontal length (m):');
+c.inspectorValues.length = 
+  ui.Label();
+c.inspector.lengthPanel = 
+  ui.Panel({
+    widgets: [
+      c.inspectorLabels.length,
+      c.inspectorValues.length
+    ],
+    layout: ui.Panel.Layout.flow('horizontal')
+  });
+c.inspectorLabels.slope = 
+  ui.Label('Average slope (°):');
+c.inspectorValues.slope = 
+  ui.Label();
+c.inspector.slopePanel = 
+  ui.Panel({
+    widgets: [
+      c.inspectorLabels.slope,
+      c.inspectorValues.slope
+    ],
+    layout: ui.Panel.Layout.flow('horizontal')
+  });
+
+// Other information.
+c.inspectorLabels.region = 
+  ui.Label('Region:');
+c.inspectorValues.region = 
+  ui.Label();
+c.inspector.regionPanel = 
+  ui.Panel({
+    widgets: [
+      c.inspectorLabels.region,
+      c.inspectorValues.region
+    ],
+    layout: ui.Panel.Layout.flow('horizontal')
+  });
+c.inspectorLabels.mountain = 
+  ui.Label('Mountain range:');
+c.inspectorValues.mountain = 
+  ui.Label();
+c.inspector.mountainPanel = 
+  ui.Panel({
+    widgets: [
+      c.inspectorLabels.mountain,
+      c.inspectorValues.mountain
+    ],
+    layout: ui.Panel.Layout.flow('horizontal')
+  });
+
+// Combine the inspector widgets.
+c.inspector.infoPanel = 
   ui.Panel([
-    c.chart.shownButton, 
-    c.chart.container
+    c.inspector.IDpanel, 
+    c.inspector.rangePanel,
+    c.inspector.lengthPanel,
+    c.inspector.slopePanel,
+    c.inspector.regionPanel,
+    c.inspector.mountainPanel
   ]);
-
-
-print(c)
+c.inspector.inspectorContainer = 
+  ui.Panel({
+    widgets: [
+      c.inspector.infoPanel,
+      c.inspector.chartPanel
+    ],
+    layout: ui.Panel.Layout.flow('horizontal')
+  });
+c.inspector.inspectorPanel = 
+  ui.Panel([
+    c.inspector.shownButton, 
+    c.inspector.inspectorContainer
+  ]);
 
 
 /*******************************************************************************
@@ -365,7 +460,7 @@ c.controlPanel.add(c.dividers.divider4);
 
 // Map panel.
 c.map.add(c.legend.panel);
-c.map.add(c.chart.chartPanel);
+c.map.add(c.inspector.inspectorPanel);
 
 ui.root.clear();
 ui.root.add(c.controlPanel);
@@ -396,12 +491,17 @@ s.widgetTitle = {
   margin: '8px 8px 4px 8px',
   color: '383838'
 };
+s.legendTitle = {
+  fontWeight: 'bold',
+  fontSize: '12px',
+  color: '383838'
+};
 s.stretchHorizontal = {
   stretch: 'horizontal'
 };
-// s.noMargin = {
-//   margin: '0px 0px 0px 0px'
-// };
+s.noMargin = {
+  margin: '0px'
+};
 // s.noTopMargin = {
 //   margin: '0px 8px 8px 8px'
 // };
@@ -420,16 +520,16 @@ s.divider = {
 // Set the styles of widgets in the control panel.
 c.controlPanel.style()
   .set({
-    width: '30%',
+    width: '300px',
     padding: '0px'
   });
 
+// Information panel.
 c.info.titleLabel.style()
   .set({
     fontSize: '20px',
     fontWeight: 'bold'
-  });
-c.info.titleLabel.style()
+  })
   .set(s.bigTopMargin);
 c.info.aboutLabel.style()
   .set(s.aboutText);
@@ -440,6 +540,7 @@ c.info.paperLabel.style()
 c.info.dataLabel.style()
   .set(s.stretchHorizontal);
 
+// Zoom-in panel.
 c.zoomInMountain.label.style()
   .set(s.widgetTitle);
 c.zoomInMountain.regionSelector.style()
@@ -447,6 +548,7 @@ c.zoomInMountain.regionSelector.style()
 c.zoomInMountain.mountainSelector.style()
   .set(s.stretchHorizontal);
 
+// Transects/centroids panel.
 c.displayTransects.label.style()
   .set(s.widgetTitle);
 c.displayTransects.transectCheckbox.style()
@@ -454,6 +556,7 @@ c.displayTransects.transectCheckbox.style()
 c.displayTransects.centroidCheckbox.style()
   .set(s.stretchHorizontal);
 
+// Vegetation difference panel.
 c.visualizeVegeDiff.label.style()
   .set(s.widgetTitle);
 c.visualizeVegeDiff.diffSelector.style()
@@ -470,23 +573,17 @@ c.map.style()
   .set({
     cursor: 'crosshair'
   });
-
 c.map.setOptions("hybrid");
-
 c.map.setControlVisibility({
-  layerList: true, // false
+  layerList: false,
   zoomControl: false,
   mapTypeControl: false, 
   fullscreenControl: false
 });
 
+// Map legend.
 c.legend.title.style()
-  .set({
-    fontWeight: 'bold',
-    fontSize: '12px',
-    color: '383838'
-  });
-c.legend.title.style()
+  .set(s.legendTitle)
   .set(s.opacityWhiteNone);
 c.legend.colorbar.style()
   .set({
@@ -498,8 +595,7 @@ c.legend.leftLabel.style()
   .set({
     margin: '4px 8px',
     fontSize: '12px'
-  });
-c.legend.leftLabel.style()
+  })
   .set(s.opacityWhiteNone);
 c.legend.centerLabel.style()
   .set({
@@ -507,28 +603,72 @@ c.legend.centerLabel.style()
     fontSize: '12px',
     textAlign: 'center',
     stretch: 'horizontal'
-  });
-c.legend.centerLabel.style()
+  })
   .set(s.opacityWhiteNone);
 c.legend.rightLabel.style()
   .set({
     margin: '4px 8px',
     fontSize: '12px'
-  });
-c.legend.rightLabel.style()
+  })
   .set(s.opacityWhiteNone);
 c.legend.panel.style()
   .set({
     position: 'bottom-right',
-    width: '30%',
+    width: '200px',
     padding: '0px'
-  });
-c.legend.panel.style()
+  })
   .set(s.opacityWhiteMed);
 c.legend.labelPanel.style()
   .set(s.opacityWhiteNone);
 
+// Transect inspector.
+c.inspector.inspectorPanel.style()
+  .set({
+    position: 'top-right',
+    shown: false
+  })
+  .set(s.opacityWhiteMed);
+Object.keys(c.inspector)
+  .forEach(function(key) {
+    if (key != "inspectorPanel") {
+      c.inspector[key].style()
+      .set(s.opacityWhiteNone);
+    }
+  });
+c.inspector.shownButton.style()
+  .set(s.noMargin);
+c.inspector.infoPanel.style()
+  .set({
+    width: '300px',
+    height: '200px'
+  });
 
+  var styleChartArea = {
+    width: '400px',
+    height: '200px',
+    margin: '0px',
+    padding: '0px'
+  }; 
+// Loop through setting the styles of 
+//  inspector labels and values.
+Object.keys(c.inspectorLabels)
+  .forEach(function(key) {
+    c.inspectorLabels[key].style()
+      .set(s.stretchHorizontal)
+      .set(s.opacityWhiteNone)
+      .set(s.legendTitle);
+  });
+Object.keys(c.inspectorValues)
+  .forEach(function(key) {
+    c.inspectorValues[key].style()
+      .set(s.stretchHorizontal)
+      .set(s.opacityWhiteNone)
+      .set({
+        fontSize: '12px'
+      });
+  });
+
+print(c.inspector)
 /*******************************************************************************
  * Behaviors *
  ******************************************************************************/
@@ -770,96 +910,143 @@ function updateLegend() {
       .vis.min);
 }
 
-// Handles map clicks for charting.
-function drawChart(coords) {
-  // Get out if call to drawChart did not come from 
-  //  map click and the chart has not been drawn previously.
+// Handles map clicks for inspecting.
+function inspectTransect(coords) {
+  // Get out if call to inspectTransect did not come from map click 
+  //  and the inspector has not been created previously.
   if (!coords.lon) {
     return null;
   }
   
-  // Get out if the clicked point intersects any transect.
+  // Buffer the clicked point by 90 m (the transect width).
   var point = ee.Geometry.Point([coords.lon, coords.lat])
-    .buffer(45);
+    .buffer(90);
+  
+  // Get out if the clicked point intersects any transect.
   var clicked = m.FtrCols.ATETs.filterBounds(point);
   if (clicked.size().getInfo() === 0) {
     return null;
   }
   
-  // Show the chart panel if this is the first time 
+  // Show the inspector panel if this is the first time 
   //  a point is clicked.
-  if (!c.chart.chartPanel.style().get('shown')) {
-    c.chart.chartPanel.style().set('shown', true);
+  if (!c.inspector.inspectorPanel.style().get('shown')) {
+    c.inspector.inspectorPanel.style()
+      .set('shown', true);
   }
   
-  // Show chart if hidden; assuming user wants to 
-  //  see updates to chart.
-  if (c.chart.shownButton.getLabel() == 'Show chart') {
-    c.chart.container.style().set({shown: true});
-    c.chart.shownButton.setLabel('Hide chart');
+  // Show information if hidden; assuming user wants to 
+  //  update the inspector container.
+  if (c.inspector.shownButton.getLabel() == 'Show information') {
+    c.inspector.inspectorContainer.style()
+      .set({shown: true});
+    c.inspector.shownButton.setLabel('Hide information');
   }
 
+  // Add the clicked point to map.
   var layer = ui.Map.Layer(
     point, {color: "0000ff"}, 'Clicked point');
   c.map.layers().set(5, layer);
 
+  // Select the first clicked transect.
+  var clickedTransect = clicked
+    .first();
+
+  // Update the infomation panel with
+  //  transect properties.
+  c.inspectorValues.ID.setValue(
+    clickedTransect.get("ET_ID").getInfo());
+  c.inspectorValues.range.setValue(
+    ee.Number(clickedTransect.get("Elv_Range"))
+      .round().getInfo());
+  c.inspectorValues.length.setValue(
+    ee.Number(clickedTransect.get("H_Length"))
+      .round().getInfo());
+  c.inspectorValues.slope.setValue(
+    ee.Number(clickedTransect.get("Avg_Slope"))
+      .round().getInfo());
+  c.inspectorValues.region.setValue(
+    clickedTransect.get("GMBA_Regn").getInfo());
+  c.inspectorValues.mountain.setValue(
+    clickedTransect.get("GMBA_Name").getInfo());
+
+  // Derive the variable name, suffix, and color.
+  var differenceType = 
+    c.visualizeVegeDiff.diffSelector
+    .getValue();
+  var varName = 
+    m.diffTypes[differenceType].varName;
+  var suffix = 
+    m.diffTypes[differenceType].suffix;
+  var color = 
+    m.diffTypes[differenceType].color;
+  
+  // Get elevation and vegetation variable lists; 
+  //  to be plotted along x and y axes, respectively.
+  var x = ee.List([
+    clickedTransect.get("LEnd_Elv"),
+    clickedTransect.get("UEnd_Elv")
+  ]);
+  var y = ee.List([
+    clickedTransect.get("L_" + suffix),
+    clickedTransect.get("U_" + suffix)
+  ]);
+
+  // Generate a chart.
   var styleChartAxis = {
     italic: false,
     bold: true
   };
   var styleChartArea = {
-    width: '600px',
-    height: '255px',
+    width: '400px',
+    height: '200px',
     margin: '0px',
     padding: '0px'
   }; 
+  var chart = ui.Chart.array.values({
+    array: y, 
+    axis: 0, 
+    xLabels: x
+  }).setOptions({
+    titlePosition: 'none',
+    colors: [color],
+    hAxis: {
+      title: 'Endpoint elevation (m)',
+      titleTextStyle: styleChartAxis
+    },
+    vAxis: {
+      title: 'Segment average ' + varName,
+      titleTextStyle: styleChartAxis
+    },
+    lineSize: 5,
+    pointSize: 8,
+    legend: {position: 'none'},
+  });
+  chart.style().set(styleChartArea);
   
-  // Generate a chart.
-  var clickedTransect = clicked
-    .first();
-  
-  print(clicked.size())
-  // var chart = ui.Chart.image.series({
-  //   imageCollection: m.col.select(
-  //     getPropertyValueList(m.imgInfo.bands, 'bname')),
-  //   region: point.buffer(radius),
-  //   reducer: ee.Reducer.mean(),
-  //   scale: m.col.first().projection().nominalScale()
-  // })
-  // .setSeriesNames(Object.keys(m.imgInfo.bands))
-  // .setChartType('ColumnChart')
-  // .setOptions({
-  //   titlePosition: 'none',
-  //   colors: getPropertyValueList(m.imgInfo.bands, 'color'),
-  //   hAxis: {
-  //     title: 'Year',
-  //     titleTextStyle: styleChartAxis
-  //   },
-  //   vAxis: {
-  //     title: 'Stacked percent cover',
-  //     titleTextStyle: styleChartAxis,
-  //   },
-  //   legend: {maxLines: 2},
-  //   isStacked: 'percent'
-  // });
-  
-  // chart.style().set(styleChartArea);
-  
-  // c.chart.container.widgets().reset([chart]);
+  // Draw the chart.
+  c.inspector.chartPanel.widgets().reset([chart]);
 }
 
 // Handles showing/hiding the chart panel.
 function showHideChart() {
   var shown = true;
-  var label = 'Hide chart';
-  if (c.chart.shownButton.getLabel() == 'Hide chart') {
+  var label = 'Hide information';
+  if (c.inspector.shownButton.getLabel() == 'Hide information') {
     shown = false;
-    label = 'Show chart';
+    label = 'Show information';
   }
-  c.chart.container.style().set({shown: shown});
-  c.chart.shownButton.setLabel(label);
+  c.inspector.inspectorContainer.style()
+    .set({shown: shown});
+  c.inspector.shownButton.setLabel(label);
 }
 
+// Handles updating the clicked point coordinates
+//  in the page's URL fragment.
+function updateUrlParamClick(newClickParams) {
+  ui.url.set('click_lon', newClickParams.lon);
+  ui.url.set('click_lat', newClickParams.lat);
+}
 
 // Zoom-in panel.
 c.zoomInMountain.regionSelector
@@ -875,7 +1062,7 @@ c.displayTransects.transectCheckbox
 c.displayTransects.centroidCheckbox
   .onChange(updateCentroidDisplay);
 
-// Difference type panel
+// Difference-type panel
 c.visualizeVegeDiff.diffSelector
   .onChange(updateMountainDifference);
 c.visualizeVegeDiff.diffSelector
@@ -884,8 +1071,20 @@ c.visualizeVegeDiff.diffSelector
   .onChange(updateTransectDifference);
 c.visualizeVegeDiff.diffSelector
   .onChange(updateLegend);
+c.visualizeVegeDiff.diffSelector
+  .onChange(function(value) {
+    
+    // Update chart if shown; assuming user wants to 
+    //  see updates to chart.
+    if (c.inspector.shownButton.getLabel() == 'Hide information') {
+      inspectTransect({
+        lon: ui.url.get('click_lon'), 
+        lat: ui.url.get('click_lat')
+      });
+    }
+  });
 
-// Difference level panel.
+// Difference-level panel.
 c.visualizeVegeDiff.mountainCheckbox
   .onChange(updateMountainDifference);
 c.visualizeVegeDiff.watershedCheckbox
@@ -896,8 +1095,9 @@ c.visualizeVegeDiff.transectCheckbox
   .onChange(updateRawTransectCheckbox);
 
 // Map panel.
-c.map.onClick(drawChart);
-c.chart.shownButton.onClick(showHideChart);
+c.map.onClick(inspectTransect);
+c.map.onClick(updateUrlParamClick);
+c.inspector.shownButton.onClick(showHideChart);
 
 
 /*******************************************************************************
@@ -918,3 +1118,10 @@ updateCentroidDisplay();
 
 // Map center.
 zoomInMountain();
+
+// Inspect a transect if applicable 
+//  (coordinates exist as URL parameters).
+inspectTransect({
+  lon: ui.url.get('click_lon'), 
+  lat: ui.url.get('click_lat')
+});
