@@ -9,7 +9,7 @@
  *  The UI Pattern Template was provided by Tyler Erickson (tylere@google.com)
  *    and Justin Braaten (braaten@google.com) at Google.
  * 
- * Updated: 11/8/2023.
+ * Updated: 11/17/2023.
  * 
  * Author: Chenyang Wei (cwei5@buffalo.edu)
  ******************************************************************************/
@@ -142,7 +142,6 @@ m.diffTypes = {
   }
 };
 
-print(m.FtrCols.ATETs.first())
 
 /*******************************************************************************
  * Components *
@@ -169,41 +168,74 @@ c.info = {};
 c.info.titleLabel = 
   ui.Label(
     'Alpine Treeline Elevational Transects (ATETs)');
-c.info.aboutLabel = 
+
+// Brief introduction.
+c.info.introLabels = {};
+c.info.introLabels.label_1 = 
   ui.Label(
     'Elevational transects constructed within '
       + 'global alpine treeline ecotones. '
-      + 'Explore the data by clicking transects '
-      + 'to inspect the pertinent information.');
-c.info.paperLabel = 
-  ui.Label({
-    value: 'Read the paper',
-    targetUrl: 'https://github.com/Chenyang-Wei'
+      + 'Explore the data by:');
+c.info.introLabels.label_2 = 
+  ui.Label(
+    '1) Choosing a mountain range to examine.');
+c.info.introLabels.label_3 = 
+  ui.Label(
+    '2) Selecting the elevational transects and/or '
+      + 'their centroids to display.');
+c.info.introLabels.label_4 = 
+  ui.Label(
+    '3) Visualizing the elevational differences in '
+      + 'canopy height and NDVI at various scales.');
+c.info.introLabels.label_5 = 
+  ui.Label(
+    '4) Clicking a transect to inspect its '
+      + 'pertinent information.');
+c.info.introPanel = 
+  ui.Panel({
+    widgets: [
+      c.info.introLabels.label_1,
+      c.info.introLabels.label_2,
+      c.info.introLabels.label_3,
+      c.info.introLabels.label_4,
+      c.info.introLabels.label_5
+    ]
   });
-c.info.dataLabel = ui.Label({
+
+// Web links.
+c.info.webLinks = {};
+c.info.webLinks.link_1 = 
+  ui.Label({
+    value: 'Check the code',
+    targetUrl: 'https://github.com/Chenyang-Wei/GEE_Modules/'
+      + 'blob/main/Public/Apps/Treeline/ATET_Visualization'
+  });
+c.info.webLinks.link_2 = ui.Label({
   value: 'Download the data',
   targetUrl: 'https://twitter.com/Chenyang_Wei'
 });
-c.info.moreInfo = 
+c.info.linkPanel = 
   ui.Panel({
     widgets: [
-      c.info.paperLabel,
-      c.info.dataLabel
+      c.info.webLinks.link_1,
+      c.info.webLinks.link_2
     ],
     layout: ui.Panel.Layout.flow('horizontal')
   });
+
+// Combine all the info widgets.
 c.info.panel = 
   ui.Panel([
     c.info.titleLabel, 
-    c.info.aboutLabel,
-    c.info.moreInfo
+    c.info.introPanel,
+    c.info.linkPanel
   ]);
 
 // Define a mountain zoom-in widget group.
 c.zoomInMountain = {};
 c.zoomInMountain.label = 
   ui.Label(
-    'Select a mountain range to inspect:');
+    '1) Select a mountain range to inspect:');
 c.zoomInMountain.regionSelector = 
   ui.Select({
     items: m.ATETinfo.regions, 
@@ -234,7 +266,7 @@ c.zoomInMountain.panel =
 c.displayTransects = {};
 c.displayTransects.label = 
   ui.Label(
-    'Determine the raw data to display:');
+    '2) Determine the raw data to display:');
 c.displayTransects.transectCheckbox = 
   ui.Checkbox({
     label: "Transects (ATETs)", 
@@ -263,7 +295,7 @@ c.displayTransects.panel =
 c.visualizeVegeDiff = {};
 c.visualizeVegeDiff.label = 
   ui.Label(
-    'Visualize the elevational differences');
+    '3) Visualize the elevational differences');
 c.visualizeVegeDiff.diffSelector = 
   ui.Select({
     items: Object.keys(m.diffTypes), 
@@ -278,17 +310,18 @@ c.visualizeVegeDiff.diffPanel =
 c.visualizeVegeDiff.levelLabel = 
   ui.Label(
     'Determine the spatial levels to display:');
-c.visualizeVegeDiff.mountainCheckbox = 
+c.visualizeVegeDiff.levelCheckboxes = {};
+c.visualizeVegeDiff.levelCheckboxes.mountain = 
   ui.Checkbox({
     label: "GMBA mountain ranges", 
     value: false
   });
-c.visualizeVegeDiff.watershedCheckbox = 
+c.visualizeVegeDiff.levelCheckboxes.watershed = 
   ui.Checkbox({
     label: "HydroSHEDS watersheds", 
     value: true
   });
-c.visualizeVegeDiff.transectCheckbox = 
+c.visualizeVegeDiff.levelCheckboxes.transect = 
   ui.Checkbox({
     label: "Elevational transects", 
     value: false
@@ -296,9 +329,9 @@ c.visualizeVegeDiff.transectCheckbox =
 c.visualizeVegeDiff.levelPanel = 
   ui.Panel([
     c.visualizeVegeDiff.levelLabel, 
-    c.visualizeVegeDiff.mountainCheckbox,
-    c.visualizeVegeDiff.watershedCheckbox,
-    c.visualizeVegeDiff.transectCheckbox,
+    c.visualizeVegeDiff.levelCheckboxes.mountain,
+    c.visualizeVegeDiff.levelCheckboxes.watershed,
+    c.visualizeVegeDiff.levelCheckboxes.transect,
   ]);
 c.visualizeVegeDiff.panel = 
   ui.Panel([
@@ -502,12 +535,9 @@ s.stretchHorizontal = {
 s.noMargin = {
   margin: '0px'
 };
-// s.noTopMargin = {
-//   margin: '0px 8px 8px 8px'
-// };
-// s.smallBottomMargin = {
-//   margin: '8px 8px 4px 8px'
-// };
+s.smallTopBottomMargin = {
+  margin: '4px 8px'
+};
 s.bigTopMargin = {
   margin: '24px 8px 8px 8px'
 };
@@ -531,36 +561,62 @@ c.info.titleLabel.style()
     fontWeight: 'bold'
   })
   .set(s.bigTopMargin);
-c.info.aboutLabel.style()
+c.info.linkPanel.style()
   .set(s.aboutText);
-c.info.moreInfo.style()
-  .set(s.aboutText);
-c.info.paperLabel.style()
-  .set(s.stretchHorizontal);
-c.info.dataLabel.style()
-  .set(s.stretchHorizontal);
+
+// Loop through setting the styles of 
+//  introduction texts and web links.
+Object.keys(c.info.introLabels)
+  .forEach(function(key) {
+    c.info.introLabels[key].style()
+      .set(s.aboutText)
+      .set(s.smallTopBottomMargin);
+  });
+Object.keys(c.info.webLinks)
+  .forEach(function(key) {
+    c.info.webLinks[key].style()
+      .set(s.stretchHorizontal);
+  });
 
 // Zoom-in panel.
 c.zoomInMountain.label.style()
   .set(s.widgetTitle);
 c.zoomInMountain.regionSelector.style()
-  .set(s.stretchHorizontal);
+  .set(s.stretchHorizontal)
+  .set(s.aboutText);
 c.zoomInMountain.mountainSelector.style()
-  .set(s.stretchHorizontal);
+  .set(s.stretchHorizontal)
+  .set(s.aboutText);
 
 // Transects/centroids panel.
 c.displayTransects.label.style()
   .set(s.widgetTitle);
 c.displayTransects.transectCheckbox.style()
-  .set(s.stretchHorizontal);
+  .set(s.stretchHorizontal)
+  .set(s.aboutText);
 c.displayTransects.centroidCheckbox.style()
-  .set(s.stretchHorizontal);
+  .set(s.stretchHorizontal)
+  .set(s.aboutText);
 
 // Vegetation difference panel.
 c.visualizeVegeDiff.label.style()
   .set(s.widgetTitle);
 c.visualizeVegeDiff.diffSelector.style()
-  .set(s.stretchHorizontal);
+  .set(s.stretchHorizontal)
+  .set(s.aboutText);
+c.visualizeVegeDiff.levelLabel.style()
+  .set(s.aboutText)
+  .set({
+    fontWeight: 'bold'
+  });
+
+// Loop through setting the style of 
+//  the difference-level checkboxes.
+Object.keys(c.visualizeVegeDiff.levelCheckboxes)
+  .forEach(function(key) {
+    c.visualizeVegeDiff.levelCheckboxes[key].style()
+      .set(s.aboutText);
+  });
 
 // Loop through setting divider style.
 Object.keys(c.dividers).forEach(function(key) {
@@ -643,12 +699,6 @@ c.inspector.infoPanel.style()
     height: '200px'
   });
 
-  var styleChartArea = {
-    width: '400px',
-    height: '200px',
-    margin: '0px',
-    padding: '0px'
-  }; 
 // Loop through setting the styles of 
 //  inspector labels and values.
 Object.keys(c.inspectorLabels)
@@ -664,11 +714,12 @@ Object.keys(c.inspectorValues)
       .set(s.stretchHorizontal)
       .set(s.opacityWhiteNone)
       .set({
-        fontSize: '12px'
+        fontSize: '12px',
+        color: '383838'
       });
   });
 
-print(c.inspector)
+
 /*******************************************************************************
  * Behaviors *
  ******************************************************************************/
@@ -726,15 +777,15 @@ function updateTransectDiffCheckbox() {
   // Get the state of the raw transect checkbox.
   var transectChecked = 
     c.displayTransects.transectCheckbox
-    .getValue();
+      .getValue();
 
   // Get the original state of the difference checkbox.
   var originalState = 
-    c.visualizeVegeDiff.transectCheckbox
-    .getValue();
+    c.visualizeVegeDiff.levelCheckboxes.transect
+      .getValue();
 
   // Update the state of the difference checkbox.
-  c.visualizeVegeDiff.transectCheckbox
+  c.visualizeVegeDiff.levelCheckboxes.transect
     .setValue(ee.Algorithms.If({
       condition: transectChecked, 
       trueCase: false, 
@@ -750,7 +801,7 @@ function updateCentroidDisplay() {
 
   // Create a layer of centroids.
   var globalATECs_Layer = ui.Map.Layer(
-    m.FtrCols.ATECs, {color: "ffff00"}, 
+    m.FtrCols.ATECs, {color: "00ffff"}, 
     "Global ATECs")
     .setShown(centroidChecked);
 
@@ -763,7 +814,7 @@ function updateMountainDifference() {
   // Get the selected difference type.
   var differenceType = 
     c.visualizeVegeDiff.diffSelector
-    .getValue();
+      .getValue();
   
   // Determine the difference dataset.
   var differenceDataset = 
@@ -775,17 +826,18 @@ function updateMountainDifference() {
   
   // Get the state of the checkbox.
   var differenceChecked = 
-    c.visualizeVegeDiff.mountainCheckbox
-    .getValue();
+    c.visualizeVegeDiff.levelCheckboxes.mountain
+      .getValue();
 
   // Create a layer of the difference.
   var difference_Img = m.emptyImg
-    .paint(differenceDataset, differenceVariable);
-  var difference_Layer = ui.Map.Layer(
-    difference_Img, 
-    m.diffTypes[differenceType].vis, 
-    differenceType + " (mountain level)")
-    .setShown(differenceChecked);
+    .paint(differenceDataset, 
+      differenceVariable);
+  var difference_Layer = 
+    ui.Map.Layer(difference_Img, 
+      m.diffTypes[differenceType].vis, 
+      differenceType + " (mountain level)")
+      .setShown(differenceChecked);
 
   // Update the map layer.
   c.map.layers().set(0, difference_Layer);
@@ -796,7 +848,7 @@ function updateWatershedDifference() {
   // Get the selected difference type.
   var differenceType = 
     c.visualizeVegeDiff.diffSelector
-    .getValue();
+      .getValue();
   
   // Determine the difference dataset.
   var differenceDataset = 
@@ -808,17 +860,18 @@ function updateWatershedDifference() {
   
   // Get the state of the checkbox.
   var differenceChecked = 
-    c.visualizeVegeDiff.watershedCheckbox
-    .getValue();
+    c.visualizeVegeDiff.levelCheckboxes.watershed
+      .getValue();
 
   // Create a layer of the difference.
   var difference_Img = m.emptyImg
-    .paint(differenceDataset, differenceVariable);
-  var difference_Layer = ui.Map.Layer(
-    difference_Img, 
-    m.diffTypes[differenceType].vis, 
-    differenceType + " (watershed level)")
-    .setShown(differenceChecked);
+    .paint(differenceDataset, 
+      differenceVariable);
+  var difference_Layer = 
+    ui.Map.Layer(difference_Img, 
+      m.diffTypes[differenceType].vis, 
+      differenceType + " (watershed level)")
+      .setShown(differenceChecked);
 
   // Update the map layer.
   c.map.layers().set(1, difference_Layer);
@@ -829,7 +882,7 @@ function updateTransectDifference() {
   // Get the selected difference type.
   var differenceType = 
     c.visualizeVegeDiff.diffSelector
-    .getValue();
+      .getValue();
   
   // Determine the difference dataset.
   var differenceDataset = 
@@ -841,18 +894,18 @@ function updateTransectDifference() {
   
   // Get the state of the checkbox.
   var differenceChecked = 
-    c.visualizeVegeDiff.transectCheckbox
-    .getValue();
+    c.visualizeVegeDiff.levelCheckboxes.transect
+      .getValue();
 
   // Create a layer of the difference.
   var difference_Img = m.emptyImg
     .paint(differenceDataset, differenceVariable)
     .paint(differenceDataset, differenceVariable, 1);
-  var difference_Layer = ui.Map.Layer(
-    difference_Img, 
-    m.diffTypes[differenceType].vis, 
-    differenceType + " (transect level)")
-    .setShown(differenceChecked);
+  var difference_Layer = 
+    ui.Map.Layer(difference_Img, 
+      m.diffTypes[differenceType].vis, 
+      differenceType + " (transect level)")
+      .setShown(differenceChecked);
 
   // Update the map layer.
   c.map.layers().set(2, difference_Layer);
@@ -864,13 +917,13 @@ function updateRawTransectCheckbox() {
   // Get the state of the transect-level 
   //  difference checkbox.
   var differenceChecked = 
-    c.visualizeVegeDiff.transectCheckbox
-    .getValue();
+    c.visualizeVegeDiff.levelCheckboxes.transect
+      .getValue();
 
   // Get the original state of the raw transect checkbox.
   var originalState = 
     c.displayTransects.transectCheckbox
-    .getValue();
+      .getValue();
 
   // Update the state of the raw transect checkbox.
   c.displayTransects.transectCheckbox
@@ -921,9 +974,9 @@ function inspectTransect(coords) {
   // Buffer the clicked point by 90 m (the transect width).
   var point = ee.Geometry.Point([coords.lon, coords.lat])
     .buffer(90);
+  var clicked = m.FtrCols.ATETs.filterBounds(point);
   
   // Get out if the clicked point intersects any transect.
-  var clicked = m.FtrCols.ATETs.filterBounds(point);
   if (clicked.size().getInfo() === 0) {
     return null;
   }
@@ -945,7 +998,7 @@ function inspectTransect(coords) {
 
   // Add the clicked point to map.
   var layer = ui.Map.Layer(
-    point, {color: "0000ff"}, 'Clicked point');
+    point, {color: "ffff00"}, 'Clicked point');
   c.map.layers().set(5, layer);
 
   // Select the first clicked transect.
@@ -1011,7 +1064,7 @@ function inspectTransect(coords) {
     titlePosition: 'none',
     colors: [color],
     hAxis: {
-      title: 'Endpoint elevation (m)',
+      title: 'Transect endpoint elevation (m)',
       titleTextStyle: styleChartAxis
     },
     vAxis: {
@@ -1073,9 +1126,8 @@ c.visualizeVegeDiff.diffSelector
   .onChange(updateLegend);
 c.visualizeVegeDiff.diffSelector
   .onChange(function(value) {
-    
-    // Update chart if shown; assuming user wants to 
-    //  see updates to chart.
+    // Update inspector if shown; assuming user wants to 
+    //  see updates to inspector.
     if (c.inspector.shownButton.getLabel() == 'Hide information') {
       inspectTransect({
         lon: ui.url.get('click_lon'), 
@@ -1085,13 +1137,13 @@ c.visualizeVegeDiff.diffSelector
   });
 
 // Difference-level panel.
-c.visualizeVegeDiff.mountainCheckbox
+c.visualizeVegeDiff.levelCheckboxes.mountain
   .onChange(updateMountainDifference);
-c.visualizeVegeDiff.watershedCheckbox
+c.visualizeVegeDiff.levelCheckboxes.watershed
   .onChange(updateWatershedDifference);
-c.visualizeVegeDiff.transectCheckbox
+c.visualizeVegeDiff.levelCheckboxes.transect
   .onChange(updateTransectDifference);
-c.visualizeVegeDiff.transectCheckbox
+c.visualizeVegeDiff.levelCheckboxes.transect
   .onChange(updateRawTransectCheckbox);
 
 // Map panel.
