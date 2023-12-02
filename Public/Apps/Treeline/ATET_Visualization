@@ -2,14 +2,15 @@
  * Introduction *
  * 
  *  This script creates a Google Earth Engine App to visualize
- *    the dataset of Alpine Treeline Elevational Transects (ATETs)
- *    and the pertinent information.
+ *    the datasets of Alpine Treeline Elevational Transects v1.0 (ATETs_v1.0)
+ *    and Alpine Treeline Elevational Transect Centroids v1.0 (ATECs_v1.0)
+ *    as well as their pertinent information.
  * 
  * Note: 
  *  The UI Pattern Template was provided by Tyler Erickson (tylere@google.com)
  *    and Justin Braaten (braaten@google.com) at Google.
  * 
- * Updated: 11/17/2023.
+ * Updated: 12/2/2023.
  * 
  * Author: Chenyang Wei (cwei5@buffalo.edu)
  ******************************************************************************/
@@ -92,7 +93,7 @@ m.ATETinfo.mountains =
 
 // Define the types of vegetation differences.
 m.diffTypes = {
-  'Canopy height difference (m)': {
+  'Canopy Height Difference (m)': {
     gmba: {
       data: m.FtrCols.gmbaVCH,
       varName: "Avg_CHdiff"
@@ -116,7 +117,7 @@ m.diffTypes = {
         '#08519c','#08306b']
     }
   },
-  'NDVI difference': {
+  'NDVI Difference': {
     gmba: {
       data: m.FtrCols.gmbaNDVI,
       varName: "Avg_VIdiff"
@@ -170,34 +171,55 @@ c.info.titleLabel =
     'Alpine Treeline Elevational Transects (ATETs)');
 
 // Brief introduction.
+c.info.introTitles = {};
 c.info.introLabels = {};
 c.info.introLabels.label_1 = 
   ui.Label(
-    'Elevational transects constructed within '
-      + 'global alpine treeline ecotones. '
-      + 'Explore the data by:');
+    'Delve into the intricate world of alpine treeline ecotones '
+      + 'through our comprehensive Elevational Transects. '
+      + 'Embark on a data-driven exploration journey by:');
+c.info.introTitles.title_2 = 
+  ui.Label(
+    '1. Selecting Your Mountain Range:');
 c.info.introLabels.label_2 = 
   ui.Label(
-    '1) Choosing a mountain range to examine.');
+    'Begin by choosing from a diverse array of mountain ranges '
+      + 'across the globe.');
+c.info.introTitles.title_3 = 
+  ui.Label(
+    '2. Transect and Centroid Analysis:');
 c.info.introLabels.label_3 = 
   ui.Label(
-    '2) Selecting the elevational transects and/or '
-      + 'their centroids to display.');
+    'Engage with detailed elevational transects, '
+      + 'or focus on their central points, '
+      + 'to gain unique insights.');
+c.info.introTitles.title_4 = 
+  ui.Label(
+    '3. Multiscale Elevational Differences:');
 c.info.introLabels.label_4 = 
   ui.Label(
-    '3) Visualizing the elevational differences in '
-      + 'canopy height and NDVI at various scales.');
+    'Discover the elevational variance in canopy height '
+      + 'and Normalized Difference Vegetation Index (NDVI) '
+      + 'across different scales for a thorough understanding.');
+c.info.introTitles.title_5 = 
+  ui.Label(
+    '4. Interactive Transect Details:');
 c.info.introLabels.label_5 = 
   ui.Label(
-    '4) Clicking a transect to inspect its '
-      + 'pertinent information.');
+    'Click on any transect to uncover a wealth of '
+      + 'relevant information, offering a deeper dive into '
+      + 'its specific characteristics.');
 c.info.introPanel = 
   ui.Panel({
     widgets: [
       c.info.introLabels.label_1,
+      c.info.introTitles.title_2,
       c.info.introLabels.label_2,
+      c.info.introTitles.title_3,
       c.info.introLabels.label_3,
+      c.info.introTitles.title_4,
       c.info.introLabels.label_4,
+      c.info.introTitles.title_5,
       c.info.introLabels.label_5
     ]
   });
@@ -206,13 +228,14 @@ c.info.introPanel =
 c.info.webLinks = {};
 c.info.webLinks.link_1 = 
   ui.Label({
-    value: 'Check the code',
-    targetUrl: 'https://github.com/Chenyang-Wei/GEE_Modules/'
-      + 'blob/main/Public/Apps/Treeline/ATET_Visualization'
+    value: 'Check the Code',
+    targetUrl: 'https://raw.githubusercontent.com/'
+      + 'Chenyang-Wei/GEE_Modules/main/Public/'
+      + 'Apps/Treeline/ATET_Visualization'
   });
 c.info.webLinks.link_2 = ui.Label({
-  value: 'Download the data',
-  targetUrl: 'https://twitter.com/Chenyang_Wei'
+  value: 'Download the Data',
+  targetUrl: 'https://zenodo.org/records/10047965'
 });
 c.info.linkPanel = 
   ui.Panel({
@@ -235,7 +258,7 @@ c.info.panel =
 c.zoomInMountain = {};
 c.zoomInMountain.label = 
   ui.Label(
-    '1) Select a mountain range to inspect:');
+    '1. Selecting Your Mountain Range:');
 c.zoomInMountain.regionSelector = 
   ui.Select({
     items: m.ATETinfo.regions, 
@@ -266,7 +289,7 @@ c.zoomInMountain.panel =
 c.displayTransects = {};
 c.displayTransects.label = 
   ui.Label(
-    '2) Determine the raw data to display:');
+    '2. Transect and Centroid Analysis:');
 c.displayTransects.transectCheckbox = 
   ui.Checkbox({
     label: "Transects (ATETs)", 
@@ -295,12 +318,12 @@ c.displayTransects.panel =
 c.visualizeVegeDiff = {};
 c.visualizeVegeDiff.label = 
   ui.Label(
-    '3) Visualize the elevational differences');
+    '3. Multiscale Elevational Differences:');
 c.visualizeVegeDiff.diffSelector = 
   ui.Select({
     items: Object.keys(m.diffTypes), 
-    placeholder: "Select a difference type...",
-    value: "Canopy height difference (m)"
+    placeholder: "Select a difference...",
+    value: "Canopy Height Difference (m)"
   });
 c.visualizeVegeDiff.diffPanel = 
   ui.Panel([
@@ -309,21 +332,21 @@ c.visualizeVegeDiff.diffPanel =
   ]);
 c.visualizeVegeDiff.levelLabel = 
   ui.Label(
-    'Determine the spatial levels to display:');
+    'Select the spatial scale(s) for display:');
 c.visualizeVegeDiff.levelCheckboxes = {};
 c.visualizeVegeDiff.levelCheckboxes.mountain = 
   ui.Checkbox({
-    label: "GMBA mountain ranges", 
+    label: "GMBA Mountain Ranges", 
     value: false
   });
 c.visualizeVegeDiff.levelCheckboxes.watershed = 
   ui.Checkbox({
-    label: "HydroSHEDS watersheds", 
+    label: "HydroSHEDS Watersheds", 
     value: true
   });
 c.visualizeVegeDiff.levelCheckboxes.transect = 
   ui.Checkbox({
-    label: "Elevational transects", 
+    label: "Elevational Transects", 
     value: false
   });
 c.visualizeVegeDiff.levelPanel = 
@@ -566,6 +589,15 @@ c.info.linkPanel.style()
 
 // Loop through setting the styles of 
 //  introduction texts and web links.
+Object.keys(c.info.introTitles)
+  .forEach(function(key) {
+    c.info.introTitles[key].style()
+      .set({
+        fontWeight: 'bold'
+      })
+      .set(s.aboutText)
+      .set(s.smallTopBottomMargin);
+  });
 Object.keys(c.info.introLabels)
   .forEach(function(key) {
     c.info.introLabels[key].style()
